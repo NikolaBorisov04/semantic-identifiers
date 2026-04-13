@@ -1,15 +1,25 @@
 <!-- Plugin Configuration File. Read more: https://plugins.jetbrains.com/docs/intellij/plugin-configuration-file.html -->
 <idea-plugin>
     <id>com.github.nikolaborisov04.semanticidentifiers</id>
-    <name>semantic-identifiers</name>
+    <name>Semantic Identifiers</name>
     <vendor>nikolaborisov04</vendor>
 
     <depends>com.intellij.modules.platform</depends>
+    <depends>com.intellij.modules.lang</depends>
 
     <resource-bundle>messages.MyBundle</resource-bundle>
 
+    <actions>
+        <action id="com.github.nikolaborisov04.semanticidentifiers.actions.SuggestNameAction"
+                class="com.github.nikolaborisov04.semanticidentifiers.actions.SuggestNameAction"
+                text="Suggest Semantic Name"
+                description="AI-powered variable naming based on context">
+
+            <add-to-group group-id="EditorPopupMenu" anchor="last"/>
+            <keyboard-shortcut keymap="$default" first-keystroke="alt shift S"/>
+        </action>
+    </actions>
+
     <extensions defaultExtensionNs="com.intellij">
-        <toolWindow factoryClass="com.github.nikolaborisov04.semanticidentifiers.toolWindow.MyToolWindowFactory" id="MyToolWindow"/>
-        <postStartupActivity implementation="com.github.nikolaborisov04.semanticidentifiers.startup.MyProjectActivity" />
     </extensions>
 </idea-plugin>
