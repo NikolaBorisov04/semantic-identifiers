@@ -1,0 +1,5 @@
+public class Example {
+    void <spot>fn</spot>() {
+        int <spot>a</spot> = 5;
+    }
+}

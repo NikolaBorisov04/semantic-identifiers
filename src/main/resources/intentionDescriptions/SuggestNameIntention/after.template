@@ -1,0 +1,5 @@
+public class Example {
+    void <spot>calculateTotal</spot>() {
+        int <spot>userAge</spot> = 5;
+    }
+}
