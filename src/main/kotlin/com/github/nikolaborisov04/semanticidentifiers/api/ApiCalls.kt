@@ -8,6 +8,8 @@ import java.time.Duration
 // by implementing the getSuggestions method and providing the necessary configuration checks.
 abstract class ApiCalls {
     
+    // The display name of the AI provider (e.g., "Gemini", "OpenAI").
+    // Used for UI elements like progress indicators.
     abstract val providerName: String
 
     // Shared HTTP client configured with standard timeouts for API communication.
@@ -27,4 +29,21 @@ abstract class ApiCalls {
 
     // Provides a user-friendly error message explaining how to configure this provider.
     abstract fun getConfigurationError(): String
+
+    // Creates the standardized prompt text used for all providers.
+    protected fun createPrompt(targetName: String, codeContext: String): String {
+        return "You are a professional software engineer. " +
+                "Suggest 3 descriptive, semantic names for the semantic identifier named '$targetName' based on the following code context. " +
+                "Return ONLY a numbered list of names.\n\nCode Context:\n$codeContext"
+    }
+
+    // Helper to escape strings for JSON payloads.
+    // Most AI providers use JSON APIs, so this is a shared utility.
+    protected fun escapeForJson(text: String): String {
+        return text.replace("\\", "\\\\")
+            .replace("\"", "\\\"")
+            .replace("\n", "\\n")
+            .replace("\r", "")
+            .replace("\t", "\\t")
+    }
 }

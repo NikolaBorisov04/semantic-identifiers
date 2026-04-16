@@ -24,22 +24,16 @@ class GeminiApiCalls : ApiCalls() {
         val apiKey = ApiKeySettings.apiKey ?: return null
 
         return try {
-            // Escape special characters to maintain valid JSON
-            val escapedContext = codeContext
-                .replace("\\", "\\\\")
-                .replace("\"", "\\\"")
-                .replace("\n", "\\n")
-                .replace("\r", "")
-                .replace("\t", "\\t")
-
-            val prompt = "You are a professional software engineer. " +
-                    "Suggest 3 descriptive, semantic names for the semantic identifier named '$targetName' based on the following code context. " +
-                    "Return ONLY a numbered list of names.\\n\\nCode Context:\\n$escapedContext"
+            // Use the shared prompt construction logic
+            val rawPrompt = createPrompt(targetName, codeContext)
+            
+            // Use the shared JSON escaping logic
+            val escapedPrompt = escapeForJson(rawPrompt)
 
             val jsonBody = """
                 {
                   "contents": [{
-                    "parts": [{"text": "$prompt"}]
+                    "parts": [{"text": "$escapedPrompt"}]
                   }]
                 }
             """.trimIndent()
