@@ -9,8 +9,9 @@ class MyPluginTest : BasePlatformTestCase() {
         assertNull(NameSuggester.findNamedElement(null))
     }
 
-    fun testFindNamedElementFindsVariableInKotlinFile() {
-        val psiFile = myFixture.configureByText("test.kt", "val fo<caret>o = 42")
+    fun testFindNamedElementFindsVariableInJavaFile() {
+        val psiFile = myFixture.configureByText("Test.java",
+            "class Test { void m() { int fo<caret>o = 42; } }")
         val element = psiFile.findElementAt(myFixture.caretOffset)
         val namedElement = NameSuggester.findNamedElement(element)
         assertNotNull(namedElement)

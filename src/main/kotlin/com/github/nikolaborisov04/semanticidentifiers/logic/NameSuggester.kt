@@ -12,11 +12,9 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiNamedElement
 import java.net.URI
-import java.net.URLEncoder
 import java.net.http.HttpClient
 import java.net.http.HttpRequest
 import java.net.http.HttpResponse
-import java.nio.charset.StandardCharsets
 import java.time.Duration
 import kotlin.math.max
 import kotlin.math.min
@@ -24,7 +22,7 @@ import kotlin.math.min
 // Singleton logic handler for semantic naming suggestions
 object NameSuggester
 {
-    private const val API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key="
+    private const val API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent"
 
     // Traverses the PSI tree upwards to find an element that can be renamed
     fun findNamedElement(element: PsiElement?): PsiNamedElement?
@@ -156,10 +154,10 @@ object NameSuggester
                 }
             """.trimIndent()
 
-            val encodedKey = URLEncoder.encode(apiKey, StandardCharsets.UTF_8.toString())
             val request = HttpRequest.newBuilder()
-                .uri(URI.create(API_URL + encodedKey))
+                .uri(URI.create(API_URL))
                 .header("Content-Type", "application/json")
+                .header("x-goog-api-key", apiKey)
                 .POST(HttpRequest.BodyPublishers.ofString(jsonBody))
                 .build()
 
