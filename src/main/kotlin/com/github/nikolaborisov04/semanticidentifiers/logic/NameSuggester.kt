@@ -66,7 +66,19 @@ object NameSuggester
     // Entry point for the Action and Intention
     fun suggestAndShow(project: Project, element: PsiElement?)
     {
-        val namedElement = findNamedElement(element)
+        // Read PSI data under a read lock (required by IntelliJ 2024.3+)
+        val psiData = ApplicationManager.getApplication().runReadAction<Triple<PsiNamedElement?, String, String>> {
+            val namedElement = findNamedElement(element)
+            if (namedElement != null) {
+                Triple(namedElement, namedElement.name ?: "unknown", getContextCode(namedElement))
+            } else {
+                Triple(null, "", "")
+            }
+        }
+
+        val namedElement = psiData.first
+        val currentName = psiData.second
+        val contextCode = psiData.third
 
         if (namedElement == null)
         {
@@ -88,9 +100,6 @@ object NameSuggester
             )
             return
         }
-
-        val currentName = namedElement.name ?: "unknown"
-        val contextCode = getContextCode(namedElement)
 
         // Run the API call in a background task
         ProgressManager.getInstance().run(object : Task.Backgroundable(project, "Analyzing code with Gemini...", true)
@@ -143,7 +152,7 @@ object NameSuggester
                 .replace("\t", "\\t")
 
             val prompt = "You are a professional software engineer. " +
-                    "Suggest 3 descriptive, semantic names for the variable/function named '$targetName' based on the following code context. " +
+                    "Suggest 3 descriptive, semantic names for the semantic identifier  named '$targetName' based on the following code context. " +
                     "Return ONLY a numbered list of names.\\n\\nCode Context:\\n$escapedContext"
 
             val jsonBody = """
