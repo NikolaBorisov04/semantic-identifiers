@@ -1,6 +1,7 @@
 package com.github.nikolaborisov04.semanticidentifiers.logic
 
-import com.github.nikolaborisov04.semanticidentifiers.settings.ApiKeySettings
+import com.github.nikolaborisov04.semanticidentifiers.api.ApiCalls
+import com.github.nikolaborisov04.semanticidentifiers.api.GeminiApiCalls
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
@@ -11,18 +12,14 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiNamedElement
-import java.net.URI
-import java.net.http.HttpClient
-import java.net.http.HttpRequest
-import java.net.http.HttpResponse
-import java.time.Duration
 import kotlin.math.max
 import kotlin.math.min
 
 // Singleton logic handler for semantic naming suggestions
 object NameSuggester
 {
-    private const val API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent"
+    // Currently, we default to Gemini. Future versions can allow users to select their provider.
+    private val apiProvider: ApiCalls = GeminiApiCalls()
 
     // Traverses the PSI tree upwards to find an element that can be renamed
     fun findNamedElement(element: PsiElement?): PsiNamedElement?
@@ -90,23 +87,23 @@ object NameSuggester
             return
         }
 
-        val apiKey = ApiKeySettings.apiKey?.takeIf { it.isNotBlank() }
-        if (apiKey == null)
+        if (!apiProvider.isConfigured())
         {
             Messages.showErrorDialog(
                 project,
-                "No Gemini API key configured.\n\nGo to Settings → Tools → Semantic Identifiers to add your key.",
-                "API Key Not Configured"
+                apiProvider.getConfigurationError(),
+                "API Not Configured"
             )
             return
         }
 
         // Run the API call in a background task
-        ProgressManager.getInstance().run(object : Task.Backgroundable(project, "Analyzing code with Gemini...", true)
+        val taskTitle = "Analyzing code with ${apiProvider.providerName}..."
+        ProgressManager.getInstance().run(object : Task.Backgroundable(project, taskTitle, true)
         {
             override fun run(indicator: ProgressIndicator)
             {
-                val result = callGeminiAPI(currentName, contextCode, apiKey)
+                val result = apiProvider.getSuggestions(currentName, contextCode)
 
                 // Switch back to the UI thread for the message box
                 ApplicationManager.getApplication().invokeLater {
@@ -114,7 +111,7 @@ object NameSuggester
                     {
                         if (result.startsWith("API Error") || result.startsWith("Exception"))
                         {
-                            Messages.showErrorDialog(project, result, "Gemini API Error")
+                            Messages.showErrorDialog(project, result, "${apiProvider.providerName} API Error")
                         }
                         else
                         {
@@ -132,92 +129,5 @@ object NameSuggester
                 }
             }
         })
-    }
-
-    // Handles the network communication with Gemini
-    private fun callGeminiAPI(targetName: String, codeContext: String, apiKey: String): String?
-    {
-        return try
-        {
-            val client = HttpClient.newBuilder()
-                .connectTimeout(Duration.ofSeconds(10))
-                .build()
-
-            // Escape special characters to maintain valid JSON
-            val escapedContext = codeContext
-                .replace("\\", "\\\\")
-                .replace("\"", "\\\"")
-                .replace("\n", "\\n")
-                .replace("\r", "")
-                .replace("\t", "\\t")
-
-            val prompt = "You are a professional software engineer. " +
-                    "Suggest 3 descriptive, semantic names for the semantic identifier  named '$targetName' based on the following code context. " +
-                    "Return ONLY a numbered list of names.\\n\\nCode Context:\\n$escapedContext"
-
-            val jsonBody = """
-                {
-                  "contents": [{
-                    "parts": [{"text": "$prompt"}]
-                  }]
-                }
-            """.trimIndent()
-
-            val request = HttpRequest.newBuilder()
-                .uri(URI.create(API_URL))
-                .header("Content-Type", "application/json")
-                .header("x-goog-api-key", apiKey)
-                .POST(HttpRequest.BodyPublishers.ofString(jsonBody))
-                .build()
-
-            val response = client.send(request, HttpResponse.BodyHandlers.ofString())
-
-            if (response.statusCode() == 200)
-            {
-                parseGeminiResponse(response.body())
-            }
-            else
-            {
-                "API Error ${response.statusCode()}: ${response.body()}"
-            }
-        }
-        catch (e: Exception)
-        {
-            "Exception: ${e.message}"
-        }
-    }
-
-    // Manual parser to extract text from the JSON response, correctly handling escape sequences
-    private fun parseGeminiResponse(json: String): String?
-    {
-        val searchKey = "\"text\": \""
-        val startIndex = json.indexOf(searchKey)
-        if (startIndex == -1) return null
-
-        val actualStart = startIndex + searchKey.length
-        val sb = StringBuilder()
-        var i = actualStart
-
-        while (i < json.length)
-        {
-            when
-            {
-                json[i] == '\\' && i + 1 < json.length ->
-                {
-                    when (json[i + 1])
-                    {
-                        '"'  -> { sb.append('"');  i += 2 }
-                        'n'  -> { sb.append('\n'); i += 2 }
-                        't'  -> { sb.append('\t'); i += 2 }
-                        '\\' -> { sb.append('\\'); i += 2 }
-                        else -> { sb.append(json[i + 1]); i += 2 }
-                    }
-                }
-                json[i] == '"' -> break
-                else -> { sb.append(json[i]); i++ }
-            }
-        }
-
-        return sb.toString().trim().ifEmpty { null }
     }
 }
