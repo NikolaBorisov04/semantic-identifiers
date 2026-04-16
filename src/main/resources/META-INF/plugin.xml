@@ -1,4 +1,18 @@
 <idea-plugin>
+    <id>com.github.nikolaborisov04.semanticidentifiers</id>
+
+    <name>Semantic Identifiers</name>
+
+    <vendor email="nikola.borisov2004@gmail.com" url="https://github.com/nikolaborisov04">Nikola Borisov</vendor>
+
+    <description><![CDATA[
+      AI-powered variable naming based on context. Provides suggestions for semantic identifiers
+      to improve code readability and maintainability.
+    ]]></description>
+
+    <depends>com.intellij.modules.platform</depends>
+    <depends>com.intellij.modules.java</depends>
+
     <actions>
         <action id="com.github.nikolaborisov04.semanticidentifiers.actions.SuggestNameAction"
                 class="com.github.nikolaborisov04.semanticidentifiers.actions.SuggestNameAction"
@@ -16,9 +30,9 @@
             <skipBeforeAfter>true</skipBeforeAfter>
         </intentionAction>
         <applicationConfigurable
-            parentId="tools"
-            instance="com.github.nikolaborisov04.semanticidentifiers.settings.SettingsConfigurable"
-            id="com.github.nikolaborisov04.semanticidentifiers.settings.SettingsConfigurable"
-            displayName="Semantic Identifiers"/>
+                parentId="tools"
+                instance="com.github.nikolaborisov04.semanticidentifiers.settings.SettingsConfigurable"
+                id="com.github.nikolaborisov04.semanticidentifiers.settings.SettingsConfigurable"
+                displayName="Semantic Identifiers"/>
     </extensions>
 </idea-plugin>

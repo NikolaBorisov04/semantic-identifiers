@@ -1,39 +1,28 @@
 package com.github.nikolaborisov04.semanticidentifiers
 
-import com.intellij.ide.highlighter.XmlFileType
-import com.intellij.openapi.components.service
-import com.intellij.psi.xml.XmlFile
-import com.intellij.testFramework.TestDataPath
+import com.github.nikolaborisov04.semanticidentifiers.logic.NameSuggester
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
-import com.intellij.util.PsiErrorElementUtil
-import com.github.nikolaborisov04.semanticidentifiers.services.MyProjectService
 
-@TestDataPath("\$CONTENT_ROOT/src/test/testData")
 class MyPluginTest : BasePlatformTestCase() {
 
-    fun testXMLFile() {
-        val psiFile = myFixture.configureByText(XmlFileType.INSTANCE, "<foo>bar</foo>")
-        val xmlFile = assertInstanceOf(psiFile, XmlFile::class.java)
-
-        assertFalse(PsiErrorElementUtil.hasErrors(project, xmlFile.virtualFile))
-
-        assertNotNull(xmlFile.rootTag)
-
-        xmlFile.rootTag?.let {
-            assertEquals("foo", it.name)
-            assertEquals("bar", it.value.text)
-        }
+    fun testFindNamedElementReturnsNullForNullInput() {
+        assertNull(NameSuggester.findNamedElement(null))
     }
 
-    fun testRename() {
-        myFixture.testRename("foo.xml", "foo_after.xml", "a2")
+    fun testFindNamedElementFindsVariableInKotlinFile() {
+        val psiFile = myFixture.configureByText("test.kt", "val fo<caret>o = 42")
+        val element = psiFile.findElementAt(myFixture.caretOffset)
+        val namedElement = NameSuggester.findNamedElement(element)
+        assertNotNull(namedElement)
+        assertEquals("foo", namedElement?.name)
     }
 
-    fun testProjectService() {
-        val projectService = project.service<MyProjectService>()
-
-        assertNotSame(projectService.getRandomNumber(), projectService.getRandomNumber())
+    fun testFindNamedElementFindsMethodInJavaFile() {
+        val psiFile = myFixture.configureByText("Test.java",
+            "class Test { void my<caret>Method() {} }")
+        val element = psiFile.findElementAt(myFixture.caretOffset)
+        val namedElement = NameSuggester.findNamedElement(element)
+        assertNotNull(namedElement)
+        assertEquals("myMethod", namedElement?.name)
     }
-
-    override fun getTestDataPath() = "src/test/testData/rename"
 }
