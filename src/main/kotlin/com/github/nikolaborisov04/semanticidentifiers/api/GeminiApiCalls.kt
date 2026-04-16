@@ -8,12 +8,13 @@ import java.net.http.HttpResponse
 // Implementation of ApiCalls for the Google Gemini AI service.
 class GeminiApiCalls : ApiCalls() {
 
+    override val id: String = "gemini"
     override val providerName: String = "Gemini"
 
     private val API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent"
 
     override fun isConfigured(): Boolean {
-        return !ApiKeySettings.apiKey.isNullOrBlank()
+        return !ApiKeySettings.getApiKey(id).isNullOrBlank()
     }
 
     override fun getConfigurationError(): String {
@@ -21,7 +22,7 @@ class GeminiApiCalls : ApiCalls() {
     }
 
     override fun getSuggestions(targetName: String, codeContext: String): String? {
-        val apiKey = ApiKeySettings.apiKey ?: return null
+        val apiKey = ApiKeySettings.getApiKey(id) ?: return null
 
         return try {
             // Use the shared prompt construction logic

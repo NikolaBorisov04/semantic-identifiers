@@ -8,6 +8,10 @@ import java.time.Duration
 // by implementing the getSuggestions method and providing the necessary configuration checks.
 abstract class ApiCalls {
     
+    // Unique identifier for the provider (e.g., "gemini", "openai").
+    // Used for saving settings and internal logic.
+    abstract val id: String
+
     // The display name of the AI provider (e.g., "Gemini", "OpenAI").
     // Used for UI elements like progress indicators.
     abstract val providerName: String

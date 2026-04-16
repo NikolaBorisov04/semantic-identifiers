@@ -1,7 +1,6 @@
 package com.github.nikolaborisov04.semanticidentifiers.logic
 
 import com.github.nikolaborisov04.semanticidentifiers.api.ApiCalls
-import com.github.nikolaborisov04.semanticidentifiers.api.GeminiApiCalls
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
@@ -18,8 +17,9 @@ import kotlin.math.min
 // Singleton logic handler for semantic naming suggestions
 object NameSuggester
 {
-    // Currently, we default to Gemini. Future versions can allow users to select their provider.
-    private val apiProvider: ApiCalls = GeminiApiCalls()
+    // Retrieve the provider currently selected in the settings.
+    private val apiProvider: ApiCalls 
+        get() = com.github.nikolaborisov04.semanticidentifiers.api.ApiProviderFactory.getActiveProvider()
 
     // Traverses the PSI tree upwards to find an element that can be renamed
     fun findNamedElement(element: PsiElement?): PsiNamedElement?
